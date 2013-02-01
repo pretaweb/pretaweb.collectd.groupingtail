@@ -36,7 +36,6 @@ class Instrument (object):
             newdata[groupname] = self.value_cast(self.data[groupname])
         self.data = newdata
 
-
     def read(self):
         """Return the current results of the bucket"""
         self.trim_groups()
@@ -63,6 +62,11 @@ class Instrument (object):
                 self.touch_group(groupname)
 
 
+class Guage (Instrument):
+    def read(self):
+        values = super(Guage, self).read()
+        self.reset()
+        return values
 
 
 class CounterInc (Instrument):
@@ -82,11 +86,6 @@ class CounterSum (Instrument):
         self.data[groupname] = self.data.get(groupname, minimum) + value
 
 
-class Guage (Instrument):
-    def read(self):
-        values = super(Guage, self).read()
-        self.reset()
-        return values
 
 class Max (Guage):
     def append_data(self, goupname, line, mo):
@@ -96,45 +95,3 @@ class Max (Guage):
             self.data[gorupname] = value
 
         
-
-class CUniqueCount (Instrument):
-    """Count the number of unique matches"""
-
-    def update_value (self, metric, mo):
-        value = mo.groups()[0]
-        s = self.groups.get(metric, set())
-        s.add(value)
-        self.groups[metric] = s
-        
-    def get_metrics (self):
-        metrics = []
-        for v, s in self.groups.items():
-            metrics.append((v, len(s)))
-        return metrics
-
-
-
-class CIntSum (Instrument):
-    """Sum integers together"""
-    def update_value (self, metric, mo):
-        value = int(mo.groups()[0])
-        self.groups[metric] = self.groups.get(metric, 0) + value
-    
-
-
-class CIntMax (Instrument):
-    """Find the maximum integer"""
-    def update_value (self, metric, mo):
-        value = int(mo.groups()[0])
-        if value > self.groups.get(metric, 0):
-            self.groups[metric] = value
-      
-
-            
-class CFloatMax (Instrument):
-    """Find the maximum float"""
-    def update_value (self, metric, mo):
-        value = float(mo.groups()[0])
-        if value > self.groups.get(metric, 0):
-            self.groups[metric] = value    
-      
