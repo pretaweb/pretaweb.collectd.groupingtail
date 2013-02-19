@@ -58,6 +58,6 @@ class GroupingTail (object):
             valuetype = match["valuetype"]
 
             for groupname, value in instrument.read():
-                metric_name = "%s-%s" % (groupname, instance_name)
+                metric_name = "%s.%s" % (groupname, instance_name)
                 yield (metric_name, valuetype, value)
 

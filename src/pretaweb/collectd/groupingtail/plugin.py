@@ -87,7 +87,7 @@ def read ():
         for metric_name, value_type, value in gt.read_metrics():
             v = collectd.Values(
                     plugin='groupingtail',
-                    plugin_instance="%s-%s" % (instance_name, metric_name),
+                    plugin_instance="%s.%s" % (instance_name, metric_name),
                     type = value_type,
                     values = (value,)
                 )
