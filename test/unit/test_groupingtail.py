@@ -1,8 +1,9 @@
 from ..helpers import *
 import os
 
-log_file = '/tmp/groupingtail_test.log'
-group_by = '^\\S+ (\\S+) '
+HERE = os.path.dirname(__file__)
+log_file = os.path.join(HERE, '..', 'logs', 'more_small.txt')
+group_by = '^\\S+ \\[\\S+ \"[^\"]*\" \"[^\"]*\"[^]]*] (\\S+) '
 
 class TestGroupingTail(object):
     def setup(self):
@@ -11,12 +12,12 @@ class TestGroupingTail(object):
         self.modules.start()
 
         # create tmp log file
-        if os.path.isfile(log_file):
-            os.remove(log_file)
+        #if os.path.isfile(log_file):
+        #    os.remove(log_file)
 
-        with open(log_file, 'w') as f:
-            for i in range(10):
-                f.write(str(i) + '\n')
+        #with open(log_file, 'w') as f:
+        #    for i in range(10):
+        #        f.write(str(i) + '\n')
 
     def teardown(self):
         #if os.path.isfile(log_file):
@@ -83,7 +84,7 @@ class TestFunction(TestGroupingTail):
         def intcast(x):
             return int(x) % NUM32
 
-        gt.add_match('tx', 'counter', CounterSum('^\\S+ \\S+ ([0-9]+)', value_cast=intcast))
+        gt.add_match('tx', 'counter', CounterSum('^\\S+ \\[\\S+ \"[^\"]*\" \"[^\"]*\"[^]]*] \\S+ \\S+ .+ HTTP\\S+ [0-9]+ ([0-9]+) ', value_cast=intcast))
 
         for metric_name, value_type, value in gt.read_metrics():
             assert_equal(metric_name, 'metric_name')
