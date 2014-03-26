@@ -1,7 +1,13 @@
 Changelog
 =========
 
-1.0a1dev1-dev (unreleased)
+1.0a1dev2 (unreleased)
+--------------------------
+
+- add test
+  [Ivan Teoh (PretaWeb)]
+
+1.0a1dev1 (2013-02-19)
 --------------------------
 
 - Package created using templer
