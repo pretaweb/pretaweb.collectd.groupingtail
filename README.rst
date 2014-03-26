@@ -67,4 +67,13 @@ The match elements contains the following configuration items:
 - ``Type`` - the data type in collectd
 
 
+Instance Names and Grouping Retention
+=====================================
  
+The resulting metric Instance name is constructed with the following syntac::
+
+  FileInstanceName.GroupValue.MatchInstanceName
+ 
+Groupingtail should return values if they are collected within a collectd cycle. Grouping tail keeps
+a list of recently used group values (currenly hard coded to a maximum 64 group values) So if no logline
+is captured then then an appropreate value is returned for that group for each match metric.
