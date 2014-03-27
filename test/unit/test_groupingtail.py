@@ -1,6 +1,7 @@
 from ..helpers import *
 import os
 import unittest
+from nose.tools import assert_equal, assert_true
 from pretaweb.collectd.groupingtail.instruments import NUM32
 
 HERE = os.path.dirname(__file__)
@@ -9,35 +10,28 @@ simple_log_file = os.path.join(HERE, '..', 'logs', 'simple.txt')
 basic_small_log_file = os.path.join(HERE, '..', 'logs', 'basic_small.txt')
 group_by = '^\\S+ \\[\\S+ \"[^\"]*\" \"[^\"]*\"[^]]*] (\\S+) '
 
-def intcast(x):
+
+def int_cast(x):
     return int(x) % NUM32
 
+
 class TestGroupingTail(object):
+    collectd_mock = MagicMock()
+    modules = patch.dict('sys.modules', {'collectd': collectd_mock})
+
     def setup(self):
-        self.collectd = MagicMock()
-        self.modules = patch.dict('sys.modules', {'collectd': self.collectd})
         self.modules.start()
 
-        # create tmp log file
-        #if os.path.isfile(log_file):
-        #    os.remove(log_file)
-
-        #with open(log_file, 'w') as f:
-        #    for i in range(10):
-        #        f.write(str(i) + '\n')
-
     def teardown(self):
-        #if os.path.isfile(log_file):
-        #    os.remove(log_file)
         self.modules.stop()
 
 
 class TestConfig(TestGroupingTail):
 
-    @unittest.skip("demonstrating skipping")
-    def test_basic_config(self):
+    @staticmethod
+    def test_basic_config():
         """
-            Test basic function for groupingtail.
+            Test basic function for grouping tail.
         """
         from pretaweb.collectd.groupingtail.plugin import configure, read
         config = CollectdConfig('root', (), (
@@ -65,8 +59,8 @@ class TestConfig(TestGroupingTail):
 
 class TestFunction(TestGroupingTail):
 
-    @unittest.skip("demonstrating skipping")
-    def test_basic_counter_inc(self):
+    @staticmethod
+    def test_basic_counter_inc():
         """
             Test basic counter inc function for groupingtail class.
         """
@@ -75,10 +69,9 @@ class TestFunction(TestGroupingTail):
 
         counter_inc = CounterInc('.')
         grouping_tail = GroupingTail(simple_log_file, '^(\d)')
-        print grouping_tail.groupmatch
         grouping_tail.add_match('simple', 'counter', counter_inc)
         grouping_tail.update()
-        print 'counter data %s' % counter_inc.data
+
         assert_equal(len(counter_inc.data), 4)
         assert_true('3' in counter_inc.data)
         assert_equal(counter_inc.data['3'], 3)
@@ -97,7 +90,8 @@ class TestFunction(TestGroupingTail):
             assert_equal(value_type, 'counter')
             assert_equal(value, key_value)
 
-    def test_basic_counter_sum(self):
+    @staticmethod
+    def test_basic_counter_sum():
         """
             Test basic counter sum function for groupingtail class.
         """
@@ -106,11 +100,9 @@ class TestFunction(TestGroupingTail):
 
         counter_sum = CounterSum('^(\d)')
         grouping_tail = GroupingTail(simple_log_file, '^(\d)')
-        print grouping_tail.groupmatch
         grouping_tail.add_match('simple', 'counter', counter_sum)
         grouping_tail.update()
-        print 'counter data %s' % counter_sum.data
-        print 'counter value_cast %s' % counter_sum.value_cast
+
         assert_equal(len(counter_sum.data), 4)
         assert_true('3' in counter_sum.data)
         assert_equal(counter_sum.data['3'], 9.0)
@@ -129,8 +121,9 @@ class TestFunction(TestGroupingTail):
             assert_equal(value_type, 'counter')
             assert_equal(value, key_value)
 
+    @staticmethod
     @unittest.skip("Not completed, skipping for now")
-    def test_counter_inc(self):
+    def test_counter_inc():
         """
             Test counter_inc function for groupingtail class.
         """
@@ -146,27 +139,22 @@ class TestFunction(TestGroupingTail):
             assert_equal(value_type, 'value_type')
             assert_equal(value, 'value')
 
+    @staticmethod
     @unittest.skip("Not completed, skipping for now")
-    def test_counter_sum(self):
+    def test_counter_sum():
         """
             Test counter_sum function for groupingtail class.
         """
         from pretaweb.collectd.groupingtail.groupingtail import GroupingTail
-        from pretaweb.collectd.groupingtail.instruments import NUM32, CounterSum
+        from pretaweb.collectd.groupingtail.instruments import CounterSum
 
         gt = GroupingTail(more_small_log_file, group_by)
 
-
-
-        gt.add_match('tx', 'counter', CounterSum('^\\S+ \\[\\S+ \"[^\"]*\" \"[^\"]*\"[^]]*] \\S+ \\S+ .+ HTTP\\S+ [0-9]+ ([0-9]+) ', value_cast=intcast))
+        gt.add_match('tx', 'counter',
+                     CounterSum('^\\S+ \\[\\S+ \"[^\"]*\" \"[^\"]*\"[^]]*] \\S+ \\S+ .+ HTTP\\S+ [0-9]+ ([0-9]+) ',
+                                value_cast=int_cast))
 
         for metric_name, value_type, value in gt.read_metrics():
             assert_equal(metric_name, 'metric_name')
             assert_equal(value_type, 'value_type')
             assert_equal(value, 'value')
-
-#def main():
-#    unittest.main()
-
-#if __name__ == '__main__':
-#    main()
