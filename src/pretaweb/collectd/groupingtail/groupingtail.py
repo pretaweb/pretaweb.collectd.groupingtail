@@ -6,12 +6,11 @@ from pygtail import Pygtail
 
 class GroupingTail (object):
 
-    def __init__ (self, filepath, groupby):
+    def __init__(self, filepath, groupby):
 
         self.groupmatch = re.compile(groupby)
 
         # write an offset file so that we start somewhat at the end of the file
-
        
         self.offsetpath = "/tmp/" + str(uuid.uuid4())
         try:
@@ -30,28 +29,23 @@ class GroupingTail (object):
 
         self.match_definitions = []
 
-
-    def update (self):
-
-        
+    def update(self):
         for line in self.fin.readlines():
             mo = self.groupmatch.match(line)
-            if mo is not None:
+            if mo is not None and mo.groups():
                 groupname = mo.groups()[0].replace(".", "_").replace("-", "_")
                 for match in self.match_definitions:
                     instrument = match["instrument"]
-                    instrument.write (groupname, line)
+                    instrument.write(groupname, line)
 
-
-    def add_match (self,  instance_name, valuetype, instrument):
+    def add_match(self,  instance_name, valuetype, instrument):
         self.match_definitions.append(dict(
-                instance_name=instance_name,
-                valuetype=valuetype,
-                instrument=instrument
-            ))
+            instance_name=instance_name,
+            valuetype=valuetype,
+            instrument=instrument
+        ))
 
-
-    def read_metrics (self):
+    def read_metrics(self):
         for match in self.match_definitions:
             instance_name = match["instance_name"]
             instrument = match["instrument"]
@@ -60,4 +54,3 @@ class GroupingTail (object):
             for groupname, value in instrument.read():
                 metric_name = "%s.%s" % (groupname, instance_name)
                 yield (metric_name, valuetype, value)
-
