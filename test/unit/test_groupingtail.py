@@ -124,7 +124,6 @@ class TestFunction(TestGroupingTail):
             assert_equal(value, key_value)
 
     @staticmethod
-    @unittest.skip("Not completed, skipping for now")
     def test_counter_inc():
         """
             Test counter_inc function for grouping tail class.
@@ -132,17 +131,23 @@ class TestFunction(TestGroupingTail):
         from pretaweb.collectd.groupingtail.groupingtail import GroupingTail
         from pretaweb.collectd.groupingtail.instruments import CounterInc
 
-        gt = GroupingTail(more_small_log_file, group_by)
-        print gt.groupmatch
-        gt.add_match('requests', 'counter', CounterInc('.'))
+        counter_inc = CounterInc('.')
+        grouping_tail = GroupingTail(basic_small_log_file, group_by)
+        grouping_tail.add_match('requests', 'counter', counter_inc)
+        grouping_tail.update()
+        assert_equal(len(counter_inc.data), 1)
+        assert_true('domain_com' in counter_inc.data)
+        assert_equal(counter_inc.data['domain_com'], 10)
 
-        for metric_name, value_type, value in gt.read_metrics():
-            assert_equal(metric_name, 'metric_name')
-            assert_equal(value_type, 'value_type')
-            assert_equal(value, 'value')
+        read_metrics = grouping_tail.read_metrics()
+
+        for key, key_value in counter_inc.data.items():
+            metric_name, value_type, value = read_metrics.next()
+            assert_equal(metric_name, str(key) + '.requests')
+            assert_equal(value_type, 'counter')
+            assert_equal(value, key_value)
 
     @staticmethod
-    @unittest.skip("Not completed, skipping for now")
     def test_counter_sum():
         """
             Test counter_sum function for grouping tail class.
@@ -150,16 +155,73 @@ class TestFunction(TestGroupingTail):
         from pretaweb.collectd.groupingtail.groupingtail import GroupingTail
         from pretaweb.collectd.groupingtail.instruments import CounterSum
 
-        gt = GroupingTail(more_small_log_file, group_by)
+        counter_sum = CounterSum('^\\S+ \\[\\S+ \"[^\"]*\" \"[^\"]*\"[^]]*] \\S+ \\S+ .+ HTTP\\S+ [0-9]+ ([0-9]+) ',
+                                 value_cast=int_cast)
+        grouping_tail = GroupingTail(basic_small_log_file, group_by)
+        grouping_tail.add_match('tx', 'counter', counter_sum)
+        grouping_tail.update()
+        assert_equal(len(counter_sum.data), 1)
+        assert_true('domain_com' in counter_sum.data)
+        assert_equal(counter_sum.data['domain_com'], 15680)
 
-        gt.add_match('tx', 'counter',
-                     CounterSum('^\\S+ \\[\\S+ \"[^\"]*\" \"[^\"]*\"[^]]*] \\S+ \\S+ .+ HTTP\\S+ [0-9]+ ([0-9]+) ',
-                                value_cast=int_cast))
+        read_metrics = grouping_tail.read_metrics()
 
-        for metric_name, value_type, value in gt.read_metrics():
-            assert_equal(metric_name, 'metric_name')
-            assert_equal(value_type, 'value_type')
-            assert_equal(value, 'value')
+        for key, key_value in counter_sum.data.items():
+            metric_name, value_type, value = read_metrics.next()
+            assert_equal(metric_name, str(key) + '.tx')
+            assert_equal(value_type, 'counter')
+            assert_equal(value, key_value)
+
+    @staticmethod
+    def test_multi_counter_inc():
+        """
+            Test counter_inc function for grouping tail class on multi domain.
+        """
+        from pretaweb.collectd.groupingtail.groupingtail import GroupingTail
+        from pretaweb.collectd.groupingtail.instruments import CounterInc
+
+        counter_inc = CounterInc('.')
+        grouping_tail = GroupingTail(more_small_log_file, group_by)
+        grouping_tail.add_match('requests', 'counter', counter_inc)
+        grouping_tail.update()
+        #print counter_inc.data
+        assert_equal(len(counter_inc.data), 1)
+        assert_true('www_domain_info' in counter_inc.data)
+        assert_equal(counter_inc.data['www_domain_info'], 3)
+
+        read_metrics = grouping_tail.read_metrics()
+
+        for key, key_value in counter_inc.data.items():
+            metric_name, value_type, value = read_metrics.next()
+            assert_equal(metric_name, str(key) + '.requests')
+            assert_equal(value_type, 'counter')
+            assert_equal(value, key_value)
+
+    @staticmethod
+    def test_multi_counter_sum():
+        """
+            Test counter_sum function for grouping tail class on multi domain.
+        """
+        from pretaweb.collectd.groupingtail.groupingtail import GroupingTail
+        from pretaweb.collectd.groupingtail.instruments import CounterSum
+
+        counter_sum = CounterSum('^\\S+ \\[\\S+ \"[^\"]*\" \"[^\"]*\"[^]]*] \\S+ \\S+ .+ HTTP\\S+ [0-9]+ ([0-9]+) ',
+                                 value_cast=int_cast)
+        grouping_tail = GroupingTail(more_small_log_file, group_by)
+        grouping_tail.add_match('tx', 'counter', counter_sum)
+        grouping_tail.update()
+        #print counter_sum.data
+        assert_equal(len(counter_sum.data), 1)
+        assert_true('www_domain_info' in counter_sum.data)
+        assert_equal(counter_sum.data['www_domain_info'], 95268)
+
+        read_metrics = grouping_tail.read_metrics()
+
+        for key, key_value in counter_sum.data.items():
+            metric_name, value_type, value = read_metrics.next()
+            assert_equal(metric_name, str(key) + '.tx')
+            assert_equal(value_type, 'counter')
+            assert_equal(value, key_value)
 
 
 class TestMultiFiles(TestGroupingTail):
