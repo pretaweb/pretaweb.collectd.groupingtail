@@ -1,21 +1,20 @@
-from nose.tools import *
-from mock import MagicMock, patch, call
-
 import os
 
 HERE = os.path.dirname(__file__)
 
+
 def fixture(name):
     return open(os.path.join(HERE, 'fixtures', name)).read()
+
 
 class CollectdConfig(object):
     """
     Quacks like collectd Config object.
     """
-    def __init__(self, key, vals, children):
+    def __init__(self, key, values, children):
         self.key = key
-        self.values = (vals,)
+        self.values = (values,)
         self.children = [
-            CollectdConfig(k,v,c)
-            for k,v,c in children
+            CollectdConfig(children_key, children_values, children_children)
+            for children_key, children_values, children_children in children
         ]
