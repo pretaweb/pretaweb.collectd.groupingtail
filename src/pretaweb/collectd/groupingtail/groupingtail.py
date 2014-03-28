@@ -13,13 +13,17 @@ class GroupingTail (object):
         # write an offset file so that we start somewhat at the end of the file
        
         self.offsetpath = "/tmp/" + str(uuid.uuid4())
+        print self.offsetpath
         try:
             inode = os.stat(filepath).st_ino
             offset = os.path.getsize(filepath) - 1024
+            print inode
+            print offset
         except OSError:
             pass
         else:
             if offset > 0:
+                print 'write offset'
                 foffset = open(self.offsetpath, "w")
                 foffset.write ("%s\n%s" % (inode, offset))
                 foffset.close()
@@ -31,6 +35,7 @@ class GroupingTail (object):
 
     def update(self):
         for line in self.fin.readlines():
+            print 'line: %s' % line
             mo = self.groupmatch.match(line)
             if mo is not None and mo.groups():
                 groupname = mo.groups()[0].replace(".", "_").replace("-", "_")

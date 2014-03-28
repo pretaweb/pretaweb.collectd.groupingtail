@@ -62,6 +62,7 @@ class TestConfig(TestGroupingTail):
 class TestFunction(TestGroupingTail):
 
     @staticmethod
+    #@unittest.skip("demonstrating skipping")
     def test_basic_counter_inc():
         """
             Test basic counter inc function for grouping tail class.
@@ -71,6 +72,7 @@ class TestFunction(TestGroupingTail):
 
         counter_inc = CounterInc('.')
         grouping_tail = GroupingTail(simple_log_file, '^(\d)')
+        print grouping_tail.offsetpath
         grouping_tail.add_match('simple', 'counter', counter_inc)
         grouping_tail.update()
 
@@ -93,6 +95,7 @@ class TestFunction(TestGroupingTail):
             assert_equal(value, key_value)
 
     @staticmethod
+    #@unittest.skip("demonstrating skipping")
     def test_basic_counter_sum():
         """
             Test basic counter sum function for grouping tail class.
@@ -102,6 +105,7 @@ class TestFunction(TestGroupingTail):
 
         counter_sum = CounterSum('^(\d)')
         grouping_tail = GroupingTail(simple_log_file, '^(\d)')
+        print grouping_tail.offsetpath
         grouping_tail.add_match('simple', 'counter', counter_sum)
         grouping_tail.update()
 
@@ -124,6 +128,7 @@ class TestFunction(TestGroupingTail):
             assert_equal(value, key_value)
 
     @staticmethod
+    #@unittest.skip("demonstrating skipping")
     def test_counter_inc():
         """
             Test counter_inc function for grouping tail class.
@@ -133,8 +138,10 @@ class TestFunction(TestGroupingTail):
 
         counter_inc = CounterInc('.')
         grouping_tail = GroupingTail(basic_small_log_file, group_by)
+        print grouping_tail.offsetpath
         grouping_tail.add_match('requests', 'counter', counter_inc)
         grouping_tail.update()
+        print counter_inc.data
         assert_equal(len(counter_inc.data), 1)
         assert_true('domain_com' in counter_inc.data)
         assert_equal(counter_inc.data['domain_com'], 10)
@@ -148,6 +155,7 @@ class TestFunction(TestGroupingTail):
             assert_equal(value, key_value)
 
     @staticmethod
+    @unittest.skip("demonstrating skipping")
     def test_counter_sum():
         """
             Test counter_sum function for grouping tail class.
@@ -173,6 +181,7 @@ class TestFunction(TestGroupingTail):
             assert_equal(value, key_value)
 
     @staticmethod
+    @unittest.skip("demonstrating skipping")
     def test_multi_counter_inc():
         """
             Test counter_inc function for grouping tail class on multi domain.
@@ -198,6 +207,7 @@ class TestFunction(TestGroupingTail):
             assert_equal(value, key_value)
 
     @staticmethod
+    @unittest.skip("demonstrating skipping")
     def test_multi_counter_sum():
         """
             Test counter_sum function for grouping tail class on multi domain.
@@ -227,6 +237,7 @@ class TestFunction(TestGroupingTail):
 class TestMultiFiles(TestGroupingTail):
 
     @staticmethod
+    @unittest.skip("demonstrating skipping")
     def test_basic_multi_files():
         """
             Test basic tail multi files function for grouping tail class.
