@@ -25,7 +25,7 @@ class GroupingTail (object):
             if offset > 0:
                 print 'write offset'
                 foffset = open(self.offsetpath, "w")
-                foffset.write ("%s\n%s" % (inode, offset))
+                #foffset.write ("%s\n%s" % (inode, offset))
                 foffset.close()
 
         self.fin = Pygtail(filepath, offset_file=self.offsetpath)
