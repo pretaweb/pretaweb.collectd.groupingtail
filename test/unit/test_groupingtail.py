@@ -237,7 +237,7 @@ class TestFunction(TestGroupingTail):
 class TestMultiFiles(TestGroupingTail):
 
     @staticmethod
-    @unittest.skip("demonstrating skipping")
+    #@unittest.skip("demonstrating skipping")
     def test_basic_multi_files():
         """
             Test basic tail multi files function for grouping tail class.
