@@ -36,6 +36,8 @@ setup(name='pretaweb.collectd.groupingtail',
       install_requires=[
           'setuptools',
           # -*- Extra requirements: -*-
+          # temp restrict to our branch till we get it merged
+          'pygtail >=0.2.1.1dev',
       ],
       entry_points="""
       # -*- Entry points: -*-
