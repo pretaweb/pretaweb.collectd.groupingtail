@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import os
 
-version = '1.0a1dev1'
+version = '1.0a1dev2'
 
 long_description = (
     open('README.rst').read()
@@ -33,8 +33,15 @@ setup(name='pretaweb.collectd.groupingtail',
       namespace_packages=['pretaweb', 'pretaweb.collectd'],
       include_package_data=True,
       zip_safe=False,
+      extras_require={
+          'test': [
+            'mock',
+          ],
+      },
       install_requires=[
           'setuptools',
+          'collectd',
+          'pygtail==0.2.1.1', # our special branch because the main branch is broken for now
           # -*- Extra requirements: -*-
           # temp restrict to our branch till we get it merged
           'pygtail >=0.2.1.1dev',

@@ -1,0 +1,2 @@
+collectd
+-e git://github.com/pretaweb/pygtail.git#egg=pygtail
