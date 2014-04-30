@@ -33,8 +33,15 @@ setup(name='pretaweb.collectd.groupingtail',
       namespace_packages=['pretaweb', 'pretaweb.collectd'],
       include_package_data=True,
       zip_safe=False,
+      extras_require={
+          'test': [
+            'mock',
+          ],
+      },
       install_requires=[
           'setuptools',
+          'collectd',
+          'pygtail',
           # -*- Extra requirements: -*-
       ],
       entry_points="""
