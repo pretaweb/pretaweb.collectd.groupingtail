@@ -1,20 +1,36 @@
+import tempfile
 from ..helpers import *
 import os
 import unittest
 from nose.tools import assert_equal, assert_true, assert_false
 from mock import MagicMock, patch
-from pretaweb.collectd.groupingtail.instruments import NUM32
+from pretaweb.collectd.groupingtail.instruments import NUM32, CounterInc
+from pretaweb.collectd.groupingtail.groupingtail import GroupingTail
+from pretaweb.collectd.groupingtail.instruments import CounterSum
 
 HERE = os.path.dirname(__file__)
 more_small_log_file = os.path.join(HERE, '..', 'logs', 'more_small.txt')
-simple_log_file = os.path.join(HERE, '..', 'logs', 'simple.txt')
+SIMPLE_LOG_FILE = os.path.join(HERE, '..', 'logs', 'simple.txt')
 second_simple_log_file = os.path.join(HERE, '..', 'logs', 'second_simple.txt')
-basic_small_log_file = os.path.join(HERE, '..', 'logs', 'basic_small.txt')
+BASIC_SMALL_LOG_FILE = os.path.join(HERE, '..', 'logs', 'basic_small.txt')
 group_by = '^\\S+ \\[\\S+ \"[^\"]*\" \"[^\"]*\"[^]]*] (\\S+) '
 
 
 def int_cast(x):
     return int(x) % NUM32
+
+
+def copy_lines(name, file):
+    with open(name) as data_file:
+        for line in data_file:
+            file.write(line)
+    file.flush()
+
+def new_grouping_tail(log_file, group_by):
+    new_log = tempfile.NamedTemporaryFile(delete=False)
+    grouping_tail = GroupingTail(new_log.name, group_by)
+    copy_lines(log_file, new_log)
+    return grouping_tail
 
 
 class TestGroupingTail(object):
@@ -67,11 +83,9 @@ class TestFunction(TestGroupingTail):
         """
             Test basic counter inc function for grouping tail class.
         """
-        from pretaweb.collectd.groupingtail.groupingtail import GroupingTail
-        from pretaweb.collectd.groupingtail.instruments import CounterInc
 
         counter_inc = CounterInc('.')
-        grouping_tail = GroupingTail(simple_log_file, '^(\d)')
+        grouping_tail = GroupingTail(SIMPLE_LOG_FILE, '^(\d)')
         #print grouping_tail.offsetpath
         grouping_tail.add_match('simple', 'counter', counter_inc)
         grouping_tail.update()
@@ -100,11 +114,9 @@ class TestFunction(TestGroupingTail):
         """
             Test basic counter sum function for grouping tail class.
         """
-        from pretaweb.collectd.groupingtail.groupingtail import GroupingTail
-        from pretaweb.collectd.groupingtail.instruments import CounterSum
 
         counter_sum = CounterSum('^(\d)')
-        grouping_tail = GroupingTail(simple_log_file, '^(\d)')
+        grouping_tail = GroupingTail(SIMPLE_LOG_FILE, '^(\d)')
         #print grouping_tail.offsetpath
         grouping_tail.add_match('simple', 'counter', counter_sum)
         grouping_tail.update()
@@ -133,13 +145,12 @@ class TestFunction(TestGroupingTail):
         """
             Test counter_inc function for grouping tail class.
         """
-        from pretaweb.collectd.groupingtail.groupingtail import GroupingTail
-        from pretaweb.collectd.groupingtail.instruments import CounterInc
 
         counter_inc = CounterInc('.')
-        grouping_tail = GroupingTail(basic_small_log_file, group_by)
-        #print grouping_tail.offsetpath
+        grouping_tail = new_grouping_tail(BASIC_SMALL_LOG_FILE, group_by)
         grouping_tail.add_match('requests', 'counter', counter_inc)
+        #print grouping_tail.offsetpath
+
         grouping_tail.update()
         #print counter_inc.data
         assert_equal(len(counter_inc.data), 1)
@@ -160,12 +171,10 @@ class TestFunction(TestGroupingTail):
         """
             Test counter_sum function for grouping tail class.
         """
-        from pretaweb.collectd.groupingtail.groupingtail import GroupingTail
-        from pretaweb.collectd.groupingtail.instruments import CounterSum
 
         counter_sum = CounterSum('^\\S+ \\[\\S+ \"[^\"]*\" \"[^\"]*\"[^]]*] \\S+ \\S+ .+ HTTP\\S+ [0-9]+ ([0-9]+) ',
                                  value_cast=int_cast)
-        grouping_tail = GroupingTail(basic_small_log_file, group_by)
+        grouping_tail = new_grouping_tail(BASIC_SMALL_LOG_FILE, group_by)
         grouping_tail.add_match('tx', 'counter', counter_sum)
         grouping_tail.update()
         assert_equal(len(counter_sum.data), 1)
@@ -186,11 +195,9 @@ class TestFunction(TestGroupingTail):
         """
             Test counter_inc function for grouping tail class on multi domain.
         """
-        from pretaweb.collectd.groupingtail.groupingtail import GroupingTail
-        from pretaweb.collectd.groupingtail.instruments import CounterInc
 
         counter_inc = CounterInc('.')
-        grouping_tail = GroupingTail(more_small_log_file, group_by)
+        grouping_tail = new_grouping_tail(more_small_log_file, group_by)
         grouping_tail.add_match('requests', 'counter', counter_inc)
         grouping_tail.update()
         #print counter_inc.data
@@ -212,12 +219,10 @@ class TestFunction(TestGroupingTail):
         """
             Test counter_sum function for grouping tail class on multi domain.
         """
-        from pretaweb.collectd.groupingtail.groupingtail import GroupingTail
-        from pretaweb.collectd.groupingtail.instruments import CounterSum
 
         counter_sum = CounterSum('^\\S+ \\[\\S+ \"[^\"]*\" \"[^\"]*\"[^]]*] \\S+ \\S+ .+ HTTP\\S+ [0-9]+ ([0-9]+) ',
                                  value_cast=int_cast)
-        grouping_tail = GroupingTail(more_small_log_file, group_by)
+        grouping_tail = new_grouping_tail(more_small_log_file, group_by)
         grouping_tail.add_match('tx', 'counter', counter_sum)
         grouping_tail.update()
         #print counter_sum.data
@@ -234,6 +239,38 @@ class TestFunction(TestGroupingTail):
             assert_equal(value, key_value)
 
 
+    @staticmethod
+    #@unittest.skip("demonstrating skipping")
+    def test_logrotate():
+        """
+            Test to ensure that logrotation works
+        """
+
+        counter_inc = CounterInc('.')
+        grouping_tail = new_grouping_tail(BASIC_SMALL_LOG_FILE, group_by)
+        grouping_tail.add_match('requests', 'counter', counter_inc)
+        #print grouping_tail.offsetpath
+
+        grouping_tail.update()
+        #print counter_inc.data
+        assert_equal(len(counter_inc.data), 1)
+        assert_true('domain_com' in counter_inc.data)
+        assert_equal(counter_inc.data['domain_com'], 10)
+
+        # now mv the file to an old one and add 10 more rows
+        log_name = grouping_tail.fin.filename
+        os.rename(log_name, log_name + ".old")
+        with open(log_name, "w") as log_file:
+            copy_lines(BASIC_SMALL_LOG_FILE, log_file)
+
+        grouping_tail.update()
+        #print counter_inc.data
+        assert_equal(len(counter_inc.data), 1)
+        assert_true('domain_com' in counter_inc.data)
+        assert_equal(counter_inc.data['domain_com'], 20)
+
+
+
 class TestMultiFiles(TestGroupingTail):
 
     @staticmethod
@@ -246,7 +283,7 @@ class TestMultiFiles(TestGroupingTail):
         from pretaweb.collectd.groupingtail.instruments import CounterInc
 
         counter_inc = CounterInc('.')
-        grouping_tail = GroupingTail(simple_log_file, '^(\d)')
+        grouping_tail = GroupingTail(SIMPLE_LOG_FILE, '^(\d)')
 
         second_counter_inc = CounterInc('.')
         second_grouping_tail = GroupingTail(second_simple_log_file, '^(\d)')
@@ -255,7 +292,7 @@ class TestMultiFiles(TestGroupingTail):
         grouping_tail.update()
 
         third_counter_inc = CounterInc('.')
-        third_grouping_tail = GroupingTail(simple_log_file, '^(\D)')
+        third_grouping_tail = GroupingTail(SIMPLE_LOG_FILE, '^(\D)')
 
         second_grouping_tail.add_match('second_simple', 'counter', second_counter_inc)
         second_grouping_tail.update()
