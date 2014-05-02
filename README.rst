@@ -3,8 +3,11 @@
 Introduction
 ============
 
-Collectd plugin to tail a log file and group metrics by some value in the log file. It tries to 
-closly mirror the tail plugin already in collectd
+The groupingtail collectd plugin is very similar to the built in `collectd tail plugin`
+execept that instead of reporting on single predefined stats, it can break down stats
+by grouping them based on values in the log itself. For example, if a value in the log
+is a hostname, then this plugin can report on metrics for each hostname sepretley without
+having to predefine the hostnames.
 
 The configuration is a series of ``<File "/path/to/file">...</Flie>`` elements contained
 in the plugin definition as follows::
@@ -33,7 +36,7 @@ configuration items:
   contained ``127.0.0.1 example.com 1234`` and your
   expression was ``^\S+ (\S+)`` then the grouping value would be ``example.com``. (Please note
   that collectd configuration syntax requires strings to be escaped - eg ``\`` is represented by ``\\``)
-- Series of ``<Match>..</Match>`` elements - These define the metrics you want to mesure
+- Series of ``<Match>..</Match>`` elements - These define the metrics you want to measure
 
 Example file definition ::
 
@@ -76,4 +79,6 @@ The resulting metric Instance name is constructed with the following syntac::
  
 Groupingtail should return values if they are collected within a collectd cycle. Grouping tail keeps
 a list of recently used group values (currenly hard coded to a maximum 64 group values) So if no logline
-is captured then then an appropreate value is returned for that group for each match metric.
+is captured then then an appropriately value is returned for that group for each match metric.
+
+_... `collectd tail plugin`:https://collectd.org/wiki/index.php/Plugin:Tail
