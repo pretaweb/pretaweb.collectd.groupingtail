@@ -1,31 +1,10 @@
 
 import re
+from time import sleep
 import collectd
 
 from groupingtail import GroupingTail
-from conftools import getConfFirstValue, getConfChildren
-
-
-#
-# Instruments library and generators
-#
-
-
-from instruments import NUM32, CounterInc, CounterSum
-
-def configure_counterinc (conf):
-    regex = getConfFirstValue(conf, 'Regex')
-    return CounterInc(regex)
-
-def configure_countersumint (conf):
-    regex = getConfFirstValue(conf, "Regex")
-    value_cast = value_cast=(lambda x: int(x) % NUM32 )
-    return CounterSum(regex, value_cast=value_cast)
-
-INSTRUMENTS = {
-        "CounterInc": configure_counterinc,
-        "CounterSumInt": configure_countersumint
-    }
+from conftools import getConfFirstValue, getConfChildren, read_config
 
 
 
@@ -38,32 +17,7 @@ files = None
 def configure (conf):
 
     global files
-    files = []
-
-    for f in getConfChildren(conf, "File"):
-
-        instance_name = getConfFirstValue(f, 'Instance')
-        filepath = f.values[0]
-        groupby = getConfFirstValue(f, 'GroupBy')
-        maxgroups = int(getConfFirstValue(f, 'MaxGroups', 64))
-
-        gt = GroupingTail(filepath, groupby)
-        
-        files.append(dict(
-                instance_name=instance_name,
-                grouping_tail=gt
-            )) 
-
-        for m in getConfChildren(f, 'Match'):
-
-            minstance_name = getConfFirstValue(m, "Instance")
-            valuetype = getConfFirstValue(m, "Type")
-
-            # dstype determins the instrument used
-            dstype = getConfFirstValue(m, "DSType")
-            instrument = INSTRUMENTS[dstype](m)
-
-            gt.add_match (minstance_name, valuetype, instrument)
+    files = read_config(conf)
 
 
 

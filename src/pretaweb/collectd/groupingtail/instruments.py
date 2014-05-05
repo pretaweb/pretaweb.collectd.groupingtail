@@ -88,10 +88,10 @@ class CounterSum (Instrument):
 
 
 class Max (Guage):
-    def append_data(self, goupname, line, mo):
+    def append_data(self, groupname, line, mo):
         value = self.value_cast(mo.groups()[0])
         current = self.data.get(groupname, None)
         if value > current or current is None:
-            self.data[gorupname] = value
+            self.data[groupname] = value
 
         
