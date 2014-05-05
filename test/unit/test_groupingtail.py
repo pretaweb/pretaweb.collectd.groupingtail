@@ -189,6 +189,33 @@ class TestFunction(TestGroupingTail):
             assert_equal(value_type, 'counter')
             assert_equal(value, key_value)
 
+
+    @staticmethod
+    def test_counter_sum_config():
+        from pretaweb.collectd.groupingtail.plugin import configure, read
+        new_log = tempfile.NamedTemporaryFile()
+
+        config = CollectdConfig('root', (), (
+            ('File', new_log.name, (
+                ('Instance', 'my_stats', ()),
+                ('GroupBy', group_by, ()),
+                ('Match', (), (
+                    ('Instance', 'tx', ()),
+                    ('Regex', '^\\S+ \\[\\S+ \"[^\"]*\" \"[^\"]*\"[^]]*] \\S+ \\S+ .+ HTTP\\S+ [0-9]+ ([0-9]+) ', ()),
+                    ('DSType', 'CounterSumInt', ()),
+                    ('Type', 'counter', ()),
+                )),
+            )),
+        ))
+
+        configure(config)
+        copy_lines(BASIC_SMALL_LOG_FILE, new_log)
+
+        read()
+        #TODO: read accumlated stats
+
+
+
     @staticmethod
     #@unittest.skip("demonstrating skipping")
     def test_multi_counter_inc():
@@ -260,7 +287,7 @@ class TestFunction(TestGroupingTail):
         # now mv the file to an old one and add 10 more rows
         log_name = grouping_tail.fin.filename
         os.rename(log_name, log_name + ".old")
-        with open(log_name, "w") as log_file:
+        with open(log_name, "a") as log_file:
             copy_lines(BASIC_SMALL_LOG_FILE, log_file)
 
         grouping_tail.update()
@@ -284,7 +311,7 @@ class TestFunction(TestGroupingTail):
         # now mv the file to an old one and add 10 more rows
         log_name = grouping_tail.fin.filename
         os.rename(log_name, log_name + ".old")
-        with open(log_name, "w") as log_file:
+        with open(log_name, "a") as log_file:
             copy_lines(BASIC_SMALL_LOG_FILE, log_file)
 
         grouping_tail.update()
@@ -293,6 +320,11 @@ class TestFunction(TestGroupingTail):
         assert_equal(len(counter_inc.data), 1)
         assert_true('domain_com' in counter_inc.data)
         assert_equal(counter_inc.data['domain_com'], 20)
+
+        with open(log_name, "a") as log_file:
+            copy_lines(BASIC_SMALL_LOG_FILE, log_file)
+        grouping_tail.update()
+        assert_equal(counter_inc.data['domain_com'], 30)
 
 
 class TestMultiFiles(TestGroupingTail):
