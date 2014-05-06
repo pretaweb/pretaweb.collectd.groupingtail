@@ -43,7 +43,7 @@ setup(name='pretaweb.collectd.groupingtail',
           'collectd',
           # -*- Extra requirements: -*-
           # temp restrict to our branch till we get it merged
-          'pygtail >=0.2.1.1dev',
+          'pygtail >=0.2.3dev',
       ],
       entry_points={
       # -*- Entry points: -*-

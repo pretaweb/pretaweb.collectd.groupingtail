@@ -28,7 +28,7 @@ class GroupingTail (object):
                 foffset.write ("%s\n%s" % (inode, offset))
                 foffset.close()
 
-        self.fin = Pygtail(filepath, offset_file=self.offsetpath)
+        self.fin = Pygtail(filepath, offset_file=self.offsetpath, copytruncate=True)
         #self.fin.readlines()
 
         self.match_definitions = []

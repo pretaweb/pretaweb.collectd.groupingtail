@@ -310,6 +310,8 @@ class TestFunction(TestGroupingTail):
 
         # now mv the file to an old one and add 10 more rows
         log_name = grouping_tail.fin.filename
+        with open(log_name, "a") as log_file:
+            copy_lines(BASIC_SMALL_LOG_FILE, log_file)
         os.rename(log_name, log_name + ".old")
         with open(log_name, "a") as log_file:
             copy_lines(BASIC_SMALL_LOG_FILE, log_file)
@@ -319,12 +321,34 @@ class TestFunction(TestGroupingTail):
         #print counter_inc.data
         assert_equal(len(counter_inc.data), 1)
         assert_true('domain_com' in counter_inc.data)
-        assert_equal(counter_inc.data['domain_com'], 20)
+        assert_equal(counter_inc.data['domain_com'], 30)
 
         with open(log_name, "a") as log_file:
             copy_lines(BASIC_SMALL_LOG_FILE, log_file)
         grouping_tail.update()
-        assert_equal(counter_inc.data['domain_com'], 30)
+        assert_equal(counter_inc.data['domain_com'], 40)
+
+
+    @staticmethod
+    def test_logrotate_then_update_then_newdata():
+        """
+            Test to ensure that logrotation works
+        """
+
+        counter_inc = CounterInc('.')
+        grouping_tail = new_grouping_tail(BASIC_SMALL_LOG_FILE, group_by)
+        grouping_tail.add_match('requests', 'counter', counter_inc)
+        log_name = grouping_tail.fin.filename
+        grouping_tail.update()
+
+
+        # test doing update before we have new data
+        os.rename(log_name, log_name + ".old")
+        grouping_tail.update()
+        with open(log_name, "a") as log_file:
+            copy_lines(BASIC_SMALL_LOG_FILE, log_file)
+        grouping_tail.update()
+        assert_equal(counter_inc.data['domain_com'], 20)
 
 
 class TestMultiFiles(TestGroupingTail):
