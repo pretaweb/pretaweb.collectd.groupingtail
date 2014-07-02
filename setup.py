@@ -47,7 +47,7 @@ setup(name='pretaweb.collectd.groupingtail',
           ],
       },
       install_requires=install_requires,
-      tests_require=tests_require,
+      tests_requires=tests_requires,
       entry_points={
       # -*- Entry points: -*-
           'console_scripts': ['groupingtail=pretaweb.collectd.groupingtail.tool:main'],
