@@ -14,6 +14,14 @@ long_description = (
     open('CHANGES.txt').read()
     + '\n')
 
+install_requires=[
+          'setuptools',
+          # -*- Extra requirements: -*-
+          # temp restrict to our branch till we get it merged
+          'pygtail >=0.2.3dev',
+      ]
+tests_requires = install_requires + ["collectd"]
+
 setup(name='pretaweb.collectd.groupingtail',
       version=version,
       description="Log tail parser-collectd plugin",
@@ -38,13 +46,8 @@ setup(name='pretaweb.collectd.groupingtail',
             'mock',
           ],
       },
-      install_requires=[
-          'setuptools',
-          'collectd',
-          # -*- Extra requirements: -*-
-          # temp restrict to our branch till we get it merged
-          'pygtail >=0.2.3dev',
-      ],
+      install_requires=install_requires,
+      tests_require=tests_require,
       entry_points={
       # -*- Entry points: -*-
           'console_scripts': ['groupingtail=pretaweb.collectd.groupingtail.tool:main'],
