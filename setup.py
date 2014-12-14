@@ -18,7 +18,7 @@ install_requires=[
           'setuptools',
           # -*- Extra requirements: -*-
           # temp restrict to our branch till we get it merged
-          'pygtail >=0.2.3dev',
+          'pygtail >0.2.2',
       ]
 tests_requires = install_requires + ["collectd"]
 
