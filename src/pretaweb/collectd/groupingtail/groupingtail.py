@@ -1,7 +1,29 @@
 import os
+import threading
 import uuid
 import re
 from pygtail import Pygtail
+import urlparse
+import SocketServer
+import Queue
+
+
+class SyslogUDPHandler(SocketServer.BaseRequestHandler):
+
+    def __init__(self, address, handler):
+        self.queue = Queue.Queue()
+        super(self, SyslogUDPHandler).__init__(address, handler)
+
+    def handle(self):
+        data = bytes.decode(self.request[0].strip())
+        socket = self.request[1]
+        #print( "%s : " % self.client_address[0], str(data))
+        self.queue.put(str(data))
+
+
+    def readlines(self):
+        while not self.queue.empty():
+            yield self.get()
 
 
 class GroupingTail (object):
@@ -12,21 +34,33 @@ class GroupingTail (object):
 
         # write an offset file so that we start somewhat at the end of the file
 
-       
-        self.offsetpath = "/tmp/" + str(uuid.uuid4())
-        try:
-            inode = os.stat(filepath).st_ino
-            offset = os.path.getsize(filepath) - 1024
-        except OSError:
-            pass
-        else:
-            if offset > 0:
-                foffset = open(self.offsetpath, "w")
-                foffset.write ("%s\n%s" % (inode, offset))
-                foffset.close()
+        # either filepath is a path or a syslogd url
+        (scheme, netloc, path, params, query, fragment) = urlparse.urlparse(filepath)
+        if scheme == 'syslog':
+            host, port = netloc.split(':')
+            server = SocketServer.UDPServer((host, port), SyslogUDPHandler)
 
-        self.fin = Pygtail(filepath, offset_file=self.offsetpath)
-        #self.fin.readlines()
+            th = threading.Thread(target=lambda: server.serve_forever(poll_interval=0.5))
+            th.daemon = True
+            th.start()
+            self.fin = server
+
+        else:
+
+            self.offsetpath = "/tmp/" + str(uuid.uuid4())
+            try:
+                inode = os.stat(filepath).st_ino
+                offset = os.path.getsize(filepath) - 1024
+            except OSError:
+                pass
+            else:
+                if offset > 0:
+                    foffset = open(self.offsetpath, "w")
+                    foffset.write ("%s\n%s" % (inode, offset))
+                    foffset.close()
+
+            self.fin = Pygtail(filepath, offset_file=self.offsetpath)
+            #self.fin.readlines()
 
         self.match_definitions = []
 
