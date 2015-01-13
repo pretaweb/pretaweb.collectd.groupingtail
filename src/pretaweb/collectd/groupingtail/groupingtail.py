@@ -28,7 +28,7 @@ class SyslogUDPHandler(SocketServer.BaseRequestHandler):
 
 class GroupingTail (object):
 
-    def __init__ (self, filepath, groupby):
+    def __init__(self, filepath, groupby):
 
         self.groupmatch = re.compile(groupby)
 
@@ -48,44 +48,44 @@ class GroupingTail (object):
         else:
 
             self.offsetpath = "/tmp/" + str(uuid.uuid4())
+            #print self.offsetpath
             try:
                 inode = os.stat(filepath).st_ino
                 offset = os.path.getsize(filepath) - 1024
+                #print inode
+                #print offset
             except OSError:
                 pass
             else:
                 if offset > 0:
+                    #print 'write offset'
                     foffset = open(self.offsetpath, "w")
                     foffset.write ("%s\n%s" % (inode, offset))
                     foffset.close()
 
-            self.fin = Pygtail(filepath, offset_file=self.offsetpath)
+            self.fin = Pygtail(filepath, offset_file=self.offsetpath, copytruncate=True)
             #self.fin.readlines()
 
         self.match_definitions = []
 
-
-    def update (self):
-
-        
+    def update(self):
         for line in self.fin.readlines():
+            #print 'line: %s' % line
             mo = self.groupmatch.match(line)
-            if mo is not None:
+            if mo is not None and mo.groups():
                 groupname = mo.groups()[0].replace(".", "_").replace("-", "_")
                 for match in self.match_definitions:
                     instrument = match["instrument"]
-                    instrument.write (groupname, line)
+                    instrument.write(groupname, line)
 
-
-    def add_match (self,  instance_name, valuetype, instrument):
+    def add_match(self,  instance_name, valuetype, instrument):
         self.match_definitions.append(dict(
-                instance_name=instance_name,
-                valuetype=valuetype,
-                instrument=instrument
-            ))
+            instance_name=instance_name,
+            valuetype=valuetype,
+            instrument=instrument
+        ))
 
-
-    def read_metrics (self):
+    def read_metrics(self):
         for match in self.match_definitions:
             instance_name = match["instance_name"]
             instrument = match["instrument"]
@@ -94,4 +94,3 @@ class GroupingTail (object):
             for groupname, value in instrument.read():
                 metric_name = "%s.%s" % (groupname, instance_name)
                 yield (metric_name, valuetype, value)
-

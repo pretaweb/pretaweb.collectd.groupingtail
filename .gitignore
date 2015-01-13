@@ -2,3 +2,12 @@
 *.pyo
 *~
 *.egg-info
+.python-version
+.tox
+*.ipynb
+bin
+include
+lib
+man
+share
+.idea

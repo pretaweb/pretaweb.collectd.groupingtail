@@ -1,10 +1,10 @@
 from setuptools import setup, find_packages
 import os
 
-version = '1.0a1dev1'
+version = '1.0a1dev2'
 
 long_description = (
-    open('README.txt').read()
+    open('README.rst').read()
     + '\n' +
     'Contributors\n'
     '============\n'
@@ -13,6 +13,14 @@ long_description = (
     + '\n' +
     open('CHANGES.txt').read()
     + '\n')
+
+install_requires=[
+          'setuptools',
+          # -*- Extra requirements: -*-
+          # temp restrict to our branch till we get it merged
+          'pygtail >0.2.2',
+      ]
+tests_requires = install_requires + ["collectd"]
 
 setup(name='pretaweb.collectd.groupingtail',
       version=version,
@@ -33,11 +41,14 @@ setup(name='pretaweb.collectd.groupingtail',
       namespace_packages=['pretaweb', 'pretaweb.collectd'],
       include_package_data=True,
       zip_safe=False,
-      install_requires=[
-          'setuptools',
-          # -*- Extra requirements: -*-
-      ],
-      entry_points="""
+      extras_require={
+          'test': [
+            'mock',
+          ],
+      },
+      install_requires=install_requires,
+      tests_requires=tests_requires,
+      entry_points={
       # -*- Entry points: -*-
-      """,
-      )
+          'console_scripts': ['groupingtail=pretaweb.collectd.groupingtail.tool:main'],
+      })
