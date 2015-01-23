@@ -44,6 +44,8 @@ setup(name='pretaweb.collectd.groupingtail',
       extras_require={
           'test': [
             'mock',
+            'guppy',
+            'memory_profiler',
           ],
       },
       install_requires=install_requires,

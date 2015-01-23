@@ -1,4 +1,7 @@
 import tempfile
+import resource
+import gc
+import sys
 from ..helpers import *
 import os
 import unittest
@@ -7,6 +10,7 @@ from mock import MagicMock, patch
 from pretaweb.collectd.groupingtail.instruments import NUM32, CounterInc
 from pretaweb.collectd.groupingtail.groupingtail import GroupingTail
 from pretaweb.collectd.groupingtail.instruments import CounterSum
+from memory_profiler import profile
 
 HERE = os.path.dirname(__file__)
 more_small_log_file = os.path.join(HERE, '..', 'logs', 'more_small.txt')
@@ -14,6 +18,7 @@ SIMPLE_LOG_FILE = os.path.join(HERE, '..', 'logs', 'simple.txt')
 second_simple_log_file = os.path.join(HERE, '..', 'logs', 'second_simple.txt')
 BASIC_SMALL_LOG_FILE = os.path.join(HERE, '..', 'logs', 'basic_small.txt')
 group_by = '^\\S+ \\[\\S+ \"[^\"]*\" \"[^\"]*\"[^]]*] (\\S+) '
+#gc.set_debug(gc.DEBUG_LEAK)
 
 
 def int_cast(x):
@@ -31,6 +36,21 @@ def new_grouping_tail(log_file, group_by):
     grouping_tail = GroupingTail(new_log.name, group_by)
     copy_lines(log_file, new_log)
     return grouping_tail
+
+
+def get_all_obj_size():
+    obj = 0
+    gc.collect()
+    total = 0
+    for obj in gc.get_objects():
+        i = id(obj)
+        size = sys.getsizeof(obj, 0)
+        total += size
+    return total
+
+def get_obj_count():
+    uncollectable = gc.collect()
+    return len(gc.get_objects()), uncollectable
 
 
 class TestGroupingTail(object):
@@ -349,6 +369,61 @@ class TestFunction(TestGroupingTail):
             copy_lines(BASIC_SMALL_LOG_FILE, log_file)
         grouping_tail.update()
         assert_equal(counter_inc.data['domain_com'], 20)
+
+    #@staticmethod
+    #def test_logrotate_memoryleak():
+    #    """
+    #        Test to ensure that logrotation doesn't cause a memoryleak
+    #    """
+    #
+    #    counter_inc = CounterInc('.')
+    #    grouping_tail = new_grouping_tail(BASIC_SMALL_LOG_FILE, group_by)
+    #    grouping_tail.add_match('requests', 'counter', counter_inc)
+    #    log_name = grouping_tail.fin.filename
+    #    grouping_tail.update()
+    #
+    #    #copy file once
+    #    os.rename(log_name, log_name + ".old")
+    #    grouping_tail.update()
+    #    with open(log_name, "a") as log_file:
+    #        copy_lines(BASIC_SMALL_LOG_FILE, log_file)
+    #    grouping_tail.update()
+    #
+    #
+    #    #no measure memory.
+    #    oldmem = get_all_obj_size()
+    #    old_count, _ = get_obj_count()
+    #
+    #    with open(log_name, "a") as log_file:
+    #        copy_lines(BASIC_SMALL_LOG_FILE, log_file)
+    #    grouping_tail.update()
+    #
+    #    #no more memory should be used because instrument has simple counters
+    #    newmem = get_all_obj_size()
+    #    new_count,_ = get_obj_count()
+    #    assert_equal(old_count, new_count)
+    #    assert_equal(oldmem, newmem)
+    #    assert_equal(counter_inc.data['domain_com'], 20)
+
+
+    @staticmethod
+    def test_syslog_connect():
+        import logging
+        import logging.handlers
+
+        my_logger = logging.getLogger('MyLogger')
+        my_logger.setLevel(logging.DEBUG)
+        handler = logging.handlers.SysLogHandler(address=('localhost', 9514), facility=19)
+        my_logger.addHandler(handler)
+
+
+        grouping_tail = GroupingTail('syslog://localhost:9514', group_by)
+        counter_inc = CounterInc('.')
+        grouping_tail.add_match('requests', 'counter', counter_inc)
+        grouping_tail.update()
+
+        my_logger.debug('this is debug')
+        grouping_tail.update()
 
 
 class TestMultiFiles(TestGroupingTail):

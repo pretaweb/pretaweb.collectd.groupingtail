@@ -5,11 +5,12 @@ NUM32 = 2 ** 32
 
 class Instrument (object):
     
-    def __init__ (self, regex, maxgroups=64, value_cast=float):
+    def __init__ (self, regex, maxgroups=64, value_cast=float, regex_group=None):
         
         self.test = re.compile(regex)
         self.maxgroups = maxgroups
         self.value_cast = value_cast
+        self.regex_group = regex_group
 
         data = None
         groups = None
@@ -82,16 +83,20 @@ class CounterInc (Instrument):
 class CounterSum (Instrument):
     def append_data (self, groupname, line, mo):
         minimum = self.value_cast(0)
-        value = self.value_cast(mo.groups()[0])
+        if self.regex_group:
+            value = self.value_cast(mo.groupdict.get(self.regex_group))
+        else:
+            value = self.value_cast(mo.groups()[0])
         self.data[groupname] = self.data.get(groupname, minimum) + value
 
 
 
 class Max (Guage):
     def append_data(self, groupname, line, mo):
-        value = self.value_cast(mo.groups()[0])
+        if self.regex_group:
+            value = self.value_cast(mo.groupdict.get(self.regex_group))
+        else:
+            value = self.value_cast(mo.groups()[0])
         current = self.data.get(groupname, None)
         if value > current or current is None:
             self.data[groupname] = value
-
-        

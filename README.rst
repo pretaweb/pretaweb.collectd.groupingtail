@@ -39,6 +39,8 @@ configuration items:
   contained ``127.0.0.1 example.com 1234`` and your
   expression was ``^\S+ (\S+)`` then the grouping value would be ``example.com``. (Please note
   that collectd configuration syntax requires strings to be escaped - eg ``\`` is represented by ``\\``)
+- ``GroupByGroup`` - If your GroupBy regex uses named groups, this is the name to use for your
+  grouping group. If not specified the first regex group will be used.
 - Series of ``<Match>..</Match>`` elements - These define the metrics you want to measure
 
 Example file definition ::
@@ -68,7 +70,8 @@ The match elements contains the following configuration items:
 
 - ``Instance`` - this is the metric name to use in collectd
 - ``Regex`` - the regular expression to use for the metric. If the ``DSType`` below requries a value
-  it will be the first group match in the expression
+  it will be the first group match in the expression or the group named by ``RegexGroup``
+- ``RegexGroup`` - if specified use this named group from ``Regex`` for the value.
 - ``DSType`` - the collectd dataset type - currently supported is ``CounterInc`` and ``CounterSumInt``
 - ``Type`` - the data type in collectd
 
