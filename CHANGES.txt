@@ -1,11 +1,16 @@
 Changelog
 =========
 
+
 1.0a1dev2 (unreleased)
 --------------------------
 
 - add test
   [Ivan Teoh (PretaWeb)]
+- added syslogd server instead of monitoring a file
+  [Dylan Jay]
+- can now specify a regex group name for both the group regex and the match regex
+  [Dylan Jay]
 
 1.0a1dev1 (2013-02-19)
 --------------------------

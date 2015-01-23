@@ -50,9 +50,10 @@ def read_config(conf):
         instance_name = getConfFirstValue(f, 'Instance')
         filepath = f.values[0]
         groupby = getConfFirstValue(f, 'GroupBy')
+        groupbygroup = getConfFirstValue(f, 'GroupByGroup', None)
         maxgroups = int(getConfFirstValue(f, 'MaxGroups', 64))
 
-        gt = GroupingTail(filepath, groupby)
+        gt = GroupingTail(filepath, groupby, groupbygroup)
 
         files.append(dict(
                 instance_name=instance_name,

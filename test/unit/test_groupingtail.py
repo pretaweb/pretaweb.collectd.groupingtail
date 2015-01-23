@@ -403,6 +403,27 @@ class TestFunction(TestGroupingTail):
         new_count,_ = get_obj_count()
         assert_equal(old_count, new_count)
         assert_equal(oldmem, newmem)
+        assert_equal(counter_inc.data['domain_com'], 20)
+
+
+    @staticmethod
+    def test_syslog_connect():
+        import logging
+        import logging.handlers
+
+        my_logger = logging.getLogger('MyLogger')
+        my_logger.setLevel(logging.DEBUG)
+        handler = logging.handlers.SysLogHandler(address = ('localhost',514), facility=19)
+        my_logger.addHandler(handler)
+
+
+        grouping_tail = GroupingTail('syslog://localhost:514', group_by)
+        grouping_tail.add_match('requests', 'counter', counter_inc)
+        grouping_tail.update()
+
+        my_logger.debug('this is debug')
+        grouping_tail.update()
+
 
 class TestMultiFiles(TestGroupingTail):
 

@@ -6,7 +6,7 @@ from pygtail import Pygtail
 
 class GroupingTail (object):
 
-    def __init__(self, filepath, groupby):
+    def __init__(self, filepath, groupby, groupbygroup=None):
 
         self.groupmatch = re.compile(groupby)
 
@@ -32,13 +32,21 @@ class GroupingTail (object):
         #self.fin.readlines()
 
         self.match_definitions = []
+        self.groupbygroup = groupbygroup
 
     def update(self):
         for line in self.fin.readlines():
             #print 'line: %s' % line
+            groupname = None
             mo = self.groupmatch.match(line)
-            if mo is not None and mo.groups():
-                groupname = mo.groups()[0].replace(".", "_").replace("-", "_")
+            if mo is not None:
+                if self.groupbygroup is None and mo.groups():
+                    groupname = mo.groups()[0]
+                else:
+                    res = res.groupdict()
+                    groupname = res.get(self.groupbygroup)
+            if groupname is not None:
+                groupname = groupname.replace(".", "_").replace("-", "_")
                 for match in self.match_definitions:
                     instrument = match["instrument"]
                     instrument.write(groupname, line)
