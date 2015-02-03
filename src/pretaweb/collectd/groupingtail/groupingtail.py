@@ -10,15 +10,12 @@ import Queue
 
 class SyslogUDPHandler(SocketServer.BaseRequestHandler):
 
-    def __init__(self, address, handler, queue):
-        self.queue = queue
-        super(self, SyslogUDPHandler).__init__(address, handler)
-
     def handle(self):
-        data = bytes.decode(self.request[0].strip())
+        data = bytes.decode(self.request[0].strip().strip('\x00'))
+        print data
         socket = self.request[1]
         #print( "%s : " % self.client_address[0], str(data))
-        self.queue.put(str(data))
+        self.server.queue.queue.put(str(data))
 
 class QueueFile:
 
@@ -26,14 +23,15 @@ class QueueFile:
         self.queue = Queue.Queue()
 
     def readlines(self):
+
         while not self.queue.empty():
-            yield self.get()
+            yield self.queue.get()
 
 
 
 class GroupingTail (object):
 
-    def __init__(self, filepath, groupby, groupbygroup=None):
+    def __init__(self, filepath, groupby, groupname=None):
 
         self.groupmatch = re.compile(groupby)
 
@@ -44,11 +42,10 @@ class GroupingTail (object):
         if scheme == 'syslog':
             host, port = netloc.split(':')
             self.fin = QueueFile()
-            def make_handler(address, handler, server):
-                return SyslogUDPHandler(address, handler, self.fin)
-            server = SocketServer.UDPServer((host, int(port)), make_handler)
+            self.server = SocketServer.UDPServer((host, int(port)), SyslogUDPHandler)
+            self.server.queue = self.fin
 
-            th = threading.Thread(target=lambda: server.serve_forever(poll_interval=0.5))
+            th = threading.Thread(target=lambda: self.server.serve_forever(poll_interval=0.5))
             th.daemon = True
             th.start()
 
@@ -74,7 +71,11 @@ class GroupingTail (object):
             #self.fin.readlines()
 
         self.match_definitions = []
-        self.groupbygroup = groupbygroup
+        self.groupbygroup = groupname
+
+    def __del__(self):
+        if hasattr(self, 'server'):
+            self.server.socket.close()
 
     def update(self):
         for line in self.fin.readlines():
@@ -84,9 +85,8 @@ class GroupingTail (object):
             if mo is not None:
                 if self.groupbygroup is None and mo.groups():
                     groupname = mo.groups()[0]
-                else:
-                    res = res.groupdict()
-                    groupname = res.get(self.groupbygroup)
+                elif self.groupbygroup is not None:
+                    groupname = mo.groupdict().get(self.groupbygroup)
             if groupname is not None:
                 groupname = groupname.replace(".", "_").replace("-", "_")
                 for match in self.match_definitions:

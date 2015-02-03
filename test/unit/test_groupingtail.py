@@ -2,6 +2,7 @@ import tempfile
 import resource
 import gc
 import sys
+import time
 from ..helpers import *
 import os
 import unittest
@@ -11,6 +12,9 @@ from pretaweb.collectd.groupingtail.instruments import NUM32, CounterInc
 from pretaweb.collectd.groupingtail.groupingtail import GroupingTail
 from pretaweb.collectd.groupingtail.instruments import CounterSum
 from memory_profiler import profile
+import logging
+import logging.handlers
+
 
 HERE = os.path.dirname(__file__)
 more_small_log_file = os.path.join(HERE, '..', 'logs', 'more_small.txt')
@@ -416,14 +420,41 @@ class TestFunction(TestGroupingTail):
         handler = logging.handlers.SysLogHandler(address=('localhost', 9514), facility=19)
         my_logger.addHandler(handler)
 
-
-        grouping_tail = GroupingTail('syslog://localhost:9514', group_by)
+        grouping_tail = GroupingTail('syslog://localhost:9514', "<159>-(.*)-")
         counter_inc = CounterInc('.')
         grouping_tail.add_match('requests', 'counter', counter_inc)
         grouping_tail.update()
 
-        my_logger.debug('this is debug')
+        my_logger.debug('-domain- 1')
+        # because its threads and sockets it needs a chance to catch up
+        time.sleep(0.1)
         grouping_tail.update()
+        assert_equal(counter_inc.data.get('domain'), 1)
+        grouping_tail.server.shutdown()
+        my_logger.removeHandler(handler)
+
+
+    @staticmethod
+    def test_namedgroups():
+
+        my_logger = logging.getLogger('MyLogger')
+        my_logger.setLevel(logging.DEBUG)
+        handler = logging.handlers.SysLogHandler(address=('localhost', 9514), facility=19)
+        my_logger.addHandler(handler)
+        regex = "<159>-(?P<domain>.*)- (?P<num>.*)"
+        grouping_tail = GroupingTail('syslog://localhost:9514', regex, groupname="domain")
+        counter = CounterSum(regex, groupname="num", value_cast=int_cast)
+        grouping_tail.add_match('requests', 'counter', counter)
+        grouping_tail.update()
+
+        my_logger.debug('-domain- 3')
+        my_logger.debug('-domain- 2')
+        # because its threads and sockets it needs a chance to catch up
+        time.sleep(0.1)
+        grouping_tail.update()
+        assert_equal(counter.data.get('domain'), 5)
+        grouping_tail.server.shutdown()
+        my_logger.removeHandler(handler)
 
 
 class TestMultiFiles(TestGroupingTail):

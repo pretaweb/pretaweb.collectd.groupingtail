@@ -31,8 +31,9 @@ def configure_counterinc (conf):
 
 def configure_countersumint (conf):
     regex = getConfFirstValue(conf, "Regex")
+    groupname = getConfFirstValue(conf, "GroupName", None)
     value_cast = value_cast=(lambda x: int(x) % NUM32 )
-    return CounterSum(regex, value_cast=value_cast)
+    return CounterSum(regex, value_cast=value_cast, groupname=groupname)
 
 INSTRUMENTS = {
         "CounterInc": configure_counterinc,
@@ -50,7 +51,7 @@ def read_config(conf):
         instance_name = getConfFirstValue(f, 'Instance')
         filepath = f.values[0]
         groupby = getConfFirstValue(f, 'GroupBy')
-        groupbygroup = getConfFirstValue(f, 'GroupByGroup', None)
+        groupbygroup = getConfFirstValue(f, 'GroupName', None)
         maxgroups = int(getConfFirstValue(f, 'MaxGroups', 64))
 
         gt = GroupingTail(filepath, groupby, groupbygroup)

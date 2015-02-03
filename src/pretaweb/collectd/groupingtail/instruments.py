@@ -5,12 +5,12 @@ NUM32 = 2 ** 32
 
 class Instrument (object):
     
-    def __init__ (self, regex, maxgroups=64, value_cast=float, regex_group=None):
+    def __init__ (self, regex, maxgroups=64, value_cast=float, groupname=None):
         
         self.test = re.compile(regex)
         self.maxgroups = maxgroups
         self.value_cast = value_cast
-        self.regex_group = regex_group
+        self.regex_group = groupname
 
         data = None
         groups = None
@@ -84,7 +84,8 @@ class CounterSum (Instrument):
     def append_data (self, groupname, line, mo):
         minimum = self.value_cast(0)
         if self.regex_group:
-            value = self.value_cast(mo.groupdict.get(self.regex_group))
+            groups = mo.groupdict()
+            value = self.value_cast(groups.get(self.regex_group))
         else:
             value = self.value_cast(mo.groups()[0])
         self.data[groupname] = self.data.get(groupname, minimum) + value
