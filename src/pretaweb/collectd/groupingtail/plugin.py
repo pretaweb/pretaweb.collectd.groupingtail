@@ -14,7 +14,7 @@ from conftools import getConfFirstValue, getConfChildren, read_config
 
 files = None
 
-def configure (conf):
+def configure(conf):
 
     global files
     files = read_config(conf)

@@ -3,7 +3,7 @@ from pretaweb.collectd.groupingtail.groupingtail import GroupingTail
 _getConfFirstValue_NOVAL = object()
 def getConfFirstValue(ob, key, default=_getConfFirstValue_NOVAL):
     for o in ob.children:
-        if o.key == key:
+        if o.key.lower() == key.lower():
             return o.values[0]
     if default == _getConfFirstValue_NOVAL:
         raise KeyError()
@@ -12,7 +12,7 @@ def getConfFirstValue(ob, key, default=_getConfFirstValue_NOVAL):
 def getConfChildren(ob, key):
     children = []
     for o in ob.children:
-        if o.key == key:
+        if o.key.lower() == key.lower():
             children.append(o)
     return children
 
